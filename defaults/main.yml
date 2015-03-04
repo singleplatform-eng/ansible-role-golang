@@ -1,0 +1,21 @@
+---
+
+# For use when installing a specific version in a task outside of main.yml
+go_version: "go1.4.1"
+go_version_tarball: "{{go_version}}.linux-amd64.tar.gz"
+
+# we could keep a lookup dict of recent versions to simplify task calling
+# e.g.
+# go_version_tarball_sha: {
+#   'go1.4.1.linux-amd64.tar.gz': '68170d5d48fc317155e69d2b55e4c09878433462ddb77d7900db6590ce2bef49',
+#   'go1.4.linux-amd64.tar.gz': 'cd82abcb0734f82f7cf2d576c9528cebdafac4c6'
+#  }
+go_version_tarball_sha: "68170d5d48fc317155e69d2b55e4c09878433462ddb77d7900db6590ce2bef49"
+
+
+go_download_url: "http://golang.org/dl/{{ go_version_tarball }}"
+go_tarball_dest: "/usr/local/src/{{ go_version_tarball }}"
+
+go_executable: "go"
+
+

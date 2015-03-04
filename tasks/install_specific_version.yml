@@ -1,0 +1,52 @@
+---
+# file: golang/tasks/install_specific_version.yml
+#command: "{{ go_executable + \" version | awk '{ print $3 }'\" | default (\"/usr/bin/env go version | awk '{print $3}'\") }}"
+
+- name: Get the current Go version (should return something similar to go1.4.1)
+  shell: "{{ go_executable + \" version | awk '{ print $3 }'\" }}"
+  ignore_errors: yes
+  changed_when: false
+  register: go_version_installed
+
+- name: Download the golang tarball for the specified version
+  get_url:
+    url: "{{ go_tarball_url | default(go_download_url) }}"
+    dest: "{{ go_tarball_dest }}"
+    sha256sum: "{{ go_version_tarball_sha }}"
+  register: go_was_downloaded
+  when: go_version_installed|failed or go_version_installed.stdout != go_version
+
+- name: Extract the tarball if we had to download it.
+  command: "tar -C /usr/local -xf {{ go_tarball_dest }}"
+  when: go_was_downloaded.changed
+
+- name: Transfer the 'go.sh' templated script to make setting the GOPATH and PATH idempotent and easy
+  template:
+    src: "go.sh"
+    dest: "/usr/local/bin/go.sh"
+    owner: root
+    group: root
+    mode: 0555
+  tags: gosh
+
+# global envvar locations: /etc/login.defs (you likely don't want this), /etc/environment/, /etc/profile, /etc/profile.d/,
+# user envvar locations: ~/.profile (not read by bash), ~/.bash_profile, ~/.bashrc
+# specify the vars in the startup scripts
+
+- name: Symlink the go.sh script to /etc/profile.d
+  file:
+    state: link
+    src: "/usr/local/bin/go.sh"
+    path: "/etc/profile.d/go.sh"
+    owner: root
+    group: root
+
+- name: Transfer over a script to set sane defaults for GOPATH, PATH if not already set
+  copy:
+    src: fallback_go_settings.sh
+    dest: /etc/profile.d/fallback_go_settings.sh
+    owner: root
+    group: root
+    mode: 0555
+
+- include: sudoers_gopath_envvar.yml

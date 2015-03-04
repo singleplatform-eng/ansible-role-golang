@@ -1,0 +1,8 @@
+- name: Add the GOPATH environmental variable to the vars allowed to be kept while sudoing
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    line: 'Defaults env_keep +="GOPATH"'
+    mode: 0440
+    backup: yes
+    validate: "visudo -cf %s"
